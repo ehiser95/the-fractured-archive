@@ -1,12 +1,9 @@
 package com.duckblade.osrs.tfa.features.pointstracker;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@Singleton
 class PlayerPointsLedger
 {
 
@@ -15,18 +12,20 @@ class PlayerPointsLedger
 	private final Map<String, Integer> totals = new HashMap<>();
 	private int unattributed;
 
-	void adjust(String player, int delta)
+	/**
+	 * @return the change actually applied after flooring
+	 */
+	int adjust(String player, int delta)
 	{
 		int current = totals.getOrDefault(player, 0);
 		int next = Math.max(FLOOR, current + delta);
 		totals.put(player, next);
-		log.debug("{} {}{} -> {}", player, delta >= 0 ? "+" : "", delta, next);
+		return next - current;
 	}
 
 	void addUnattributed(int amount)
 	{
 		unattributed += amount;
-		log.debug("unattributed +{} -> {}", amount, unattributed);
 	}
 
 	int getUnattributed()
@@ -34,25 +33,9 @@ class PlayerPointsLedger
 		return unattributed;
 	}
 
-	int getTotal(String player)
+	Map<String, Integer> getTotals()
 	{
-		return totals.getOrDefault(player, 0);
-	}
-
-	int getTeamTotal()
-	{
-		int sum = unattributed;
-		for (int v : totals.values())
-		{
-			sum += v;
-		}
-		return sum;
-	}
-
-	void reset()
-	{
-		totals.clear();
-		unattributed = 0;
+		return new HashMap<>(totals);
 	}
 
 }
